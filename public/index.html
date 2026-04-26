@@ -181,15 +181,19 @@
       // --- 認証機能 ---
 
       // 匿名ログイン
+            // 匿名ログイン
       signInButton.addEventListener('click', async () => {
+          console.log("入室ボタンがクリックされました！"); // ★ここを追加
           try {
+              console.log("signInAnonymouslyを呼び出します..."); // ★ここを追加
               await signInAnonymously(auth);
-              console.log("匿名ログインしました！");
+              console.log("匿名ログインしました！"); // ★ここも確認
           } catch (error) {
-              console.error("匿名ログインエラー:", error);
+              console.error("匿名ログインエラー:", error); // ★ここも確認
               alert("入室できませんでした。もう一度試してください。");
           }
       });
+
 
       // ログアウト
       signOutButton.addEventListener('click', async () => {
