@@ -76,7 +76,7 @@
             border-radius: 8px;
             text-align: left;
         }
-        /* メッセージごとのコンテナスタイルを修正・追記 */
+        /* メッセージごとのコンテナスタイル */
         .message-item-container {
             display: flex; /* Flexboxを使って要素を横に並べる */
             align-items: center; /* 縦方向中央揃え */
@@ -141,10 +141,10 @@
     <!-- Firebase SDK のロードと初期化 -->
     <script type="module">
       // Import the functions you need from the SDKs you need
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-      import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-      // ★ getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc, deleteDoc をインポート
-      import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js";
+      import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/7.20.0/firebase-auth.js";
+      // ★ collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc, deleteDoc をインポート
+      import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/7.20.0/firebase-firestore.js";
 
       // Your web app's Firebase configuration
       // ★★★★★ ここをきみのFirebaseプロジェクトの情報に置き換えること！ ★★★★★
@@ -263,38 +263,5 @@
               const displayName = userNameSpan.textContent; // 現在の表示名を使用
 
               try {
-                  await addDoc(collection(db, "messages"), {
-                      text: messageText,
-                      authorUid: currentUser.uid,
-                      authorName: displayName, // 送信時の名前を保存
-                      timestamp: serverTimestamp() // Firebaseのサーバー時間で記録
-                  });
-                  messageTextInput.value = ''; // 入力欄をクリア
-                  console.log("メッセージを送信しました。");
-              } catch (error) {
-                  console.error("メッセージ送信エラー:", error);
-                  alert("メッセージを送信できませんでした。");
-              }
-          } else {
-              alert("入室しているか、メッセージが入力されているか確認してください。");
-          }
-      });
+                  await addDoc(collection(応答がありません
 
-      // メッセージのリアルタイム表示（ログイン中のみ）
-      onAuthStateChanged(auth, (user) => {
-        if (user) {
-          // "messages"コレクションへのクエリを作成 (timestampの降順で取得)
-          const q = query(collection(db, "messages"), orderBy("timestamp", "desc"));
-
-          // リアルタイムリスナーを設定
-          onSnapshot(q, (snapshot) => {
-              messagesDiv.innerHTML = ''; // 一度既存のメッセージをクリア
-              if (snapshot.empty) {
-                  messagesDiv.innerHTML = '<p>まだメッセージはありません。</p>';
-                  return;
-              }
-              const messages = [];
-              snapshot.forEach((doc) => {
-                  messages.push({ id: doc.id, ...doc.data() }); // ドキュメントIDも保存
-              });
-              // 古応答がありません
