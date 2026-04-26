@@ -127,6 +127,7 @@
             <input type="text" id="name-input" placeholder="名前を変更" />
             <button id="change-name-button">名前を変更</button>
             <button id="sign-in-button">入室する（匿名ログイン）</button>
+            <button id="sign-in-google-button">Googleで入室</button> <!-- ★ここを追加！ -->
             <button id="sign-out-button" style="display:none;">退室する</button>
         </div>
 
@@ -144,18 +145,18 @@
             <button id="send-message-button">送信</button>
         </div>
 
-        <!-- ★ここから追加: ホスト用の全メッセージ削除ボタン -->
+        <!-- ホスト用の全メッセージ削除ボタン -->
         <div style="text-align: center; margin-top: 20px;">
             <button id="reset-messages-button" style="display:none;">全メッセージをリセット</button>
         </div>
-        <!-- ★ここまで追加 -->
     </div>
 
-    <!-- Firebase SDK のロードと初期化 -->
+        <!-- Firebase SDK のロードと初期化 -->
     <script type="module">
       // Import the functions you need from the SDKs you need
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-      import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+      // ★ GoogleAuthProvider, signInWithPopup を追加
+      import { getAuth, signInAnonymously, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
       // ★ collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc, deleteDoc, getDocs, writeBatch をインポート
       import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc, deleteDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -184,6 +185,7 @@
       const nameInput = document.getElementById('name-input');
       const changeNameButton = document.getElementById('change-name-button');
       const signInButton = document.getElementById('sign-in-button');
+      const signInGoogleButton = document.getElementById('sign-in-google-button'); // ★追加: Googleログインボタンの要素を取得
       const signOutButton = document.getElementById('sign-out-button');
       const messagesDiv = document.getElementById('messages');
       const messageTextInput = document.getElementById('message-text-input');
@@ -191,7 +193,7 @@
       const resetMessagesButton = document.getElementById('reset-messages-button'); // ★追加: 全削除ボタンの要素を取得
 
       let currentUser = null; // 現在のユーザー情報
-      let hostUid = null; // ★追加: ホストのUIDをここに保存する
+      let hostUid = null; // ホストのUIDをここに保存する
       let messageUnsubscribe = null; // メッセージリスナーを停止するための変数
 
       // --- 認証機能 ---
@@ -204,6 +206,21 @@
           } catch (error) {
               console.error("匿名ログインエラー:", error);
               alert("入室できませんでした。もう一度試してください。");
+          }
+      });
+
+      // Googleログイン
+      signInGoogleButton.addEventListener('click', async () => {
+          const provider = new GoogleAuthProvider();
+          try {
+              await signInWithPopup(auth, provider);
+              console.log("Googleログインしました！");
+              // Googleログイン成功後、そのユーザーのUIDをコンソールに出力
+              console.log("ホストのUIDとして使用すべきGoogleアカウントのUID:", auth.currentUser.uid);
+              alert("Googleログイン成功！コンソールにUIDを表示しました。このUIDをFirestoreのsettings/hostに設定してください。");
+          } catch (error) {
+              console.error("Googleログインエラー:", error);
+              alert("Googleで入室できませんでした。");
           }
       });
 
@@ -222,17 +239,19 @@
           if (user) {
               // ログイン中
               currentUser = user;
-              await setupHostUid(); // ★追加: ホストUIDの読み込み
+              await setupHostUid(); // ★ホストUIDの読み込み
               fetchUserName(user.uid); // Firestoreからユーザー名を取得
+              
               signInButton.style.display = 'none';
+              signInGoogleButton.style.display = 'none'; // ★Googleログインボタンを隠す
               signOutButton.style.display = 'inline-block';
               nameInput.disabled = false;
               changeNameButton.disabled = false;
               messageTextInput.disabled = false;
               sendMessageButton.disabled = false;
 
-              // ホストの場合のみ全削除ボタンを表示 ★追加
-              if (currentUser.uid === hostUid) { // ★修正: hostUid を使用
+              // ホストの場合のみ全削除ボタンを表示
+              if (currentUser.uid === hostUid) { 
                   resetMessagesButton.style.display = 'inline-block';
               } else {
                   resetMessagesButton.style.display = 'none';
@@ -246,6 +265,7 @@
               userNameSpan.textContent = '名無しさん';
               nameInput.value = '';
               signInButton.style.display = 'inline-block';
+              signInGoogleButton.style.display = 'inline-block'; // ★Googleログインボタンを表示
               signOutButton.style.display = 'none';
               nameInput.disabled = true;
               changeNameButton.disabled = true;
@@ -258,7 +278,7 @@
                   messageUnsubscribe();
                   messageUnsubscribe = null;
               }
-              resetMessagesButton.style.display = 'none'; // ★追加: ログアウトしたらボタンを隠す
+              resetMessagesButton.style.display = 'none'; // ログアウトしたらボタンを隠す
           }
       });
 
