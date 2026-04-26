@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>女子寮談話室 - ひみつの掲示板</title>
+    <title>女子寮談話室 - おうか掲示板</title>
     <!-- 簡単なスタイルを追加して掲示板っぽくするよ -->
     <style>
         body {
@@ -121,7 +121,15 @@
 <body>
     <div id="app-container">
         <h1>ようこそ、女子寮談話室へ！</h1>
-
+	<div style="background-color: #fff9c4; border-left: 5px solid #ffeb3b; padding: 15px; margin-bottom: 25px; border-radius: 8px;">
+            <p style="margin: 0; font-weight: bold; color: #c09f00;">◆ ご利用ガイド ◆</p>
+            <ul style="margin: 10px 0 0 20px; padding: 0;">
+                <li style="margin-bottom: 5px;">「入室する（匿名ログイン）」ボタンで談話室へ入室してください。</li>
+                <li style="margin-bottom: 5px;">入室後、「現在のユーザー：名無しさん」の隣の入力欄で、お好きな名前（ニックネーム）に変更できます。</li>
+                <li style="margin-bottom: 5px;">自分の投稿は削除できますが、<strong style="color: #d32f2f;">退室してしまうと元の匿名ユーザーには戻れないため、消せなくなります。</strong>ご注意ください。</li>
+                <li>「Googleで入室」ボタンは寮長（ホスト）専用です。一般の方はクリックしないでくださいね！</li>
+            </ul>
+        </div>
         <div id="auth-status">
             <p>現在のユーザー：<span id="user-name">名無しさん</span></p>
             <input type="text" id="name-input" placeholder="名前を変更" />
