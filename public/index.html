@@ -109,6 +109,13 @@
         .delete-button:hover {
             background-color: #d32f2f;
         }
+        #reset-messages-button { /* 全削除ボタンのスタイル */
+            background-color: #ff9800;
+            margin-top: 20px;
+        }
+        #reset-messages-button:hover {
+            background-color: #fb8c00;
+        }
     </style>
 </head>
 <body>
@@ -144,13 +151,13 @@
         <!-- ★ここまで追加 -->
     </div>
 
-        <!-- Firebase SDK のロードと初期化 -->
+    <!-- Firebase SDK のロードと初期化 -->
     <script type="module">
       // Import the functions you need from the SDKs you need
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-      import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-      // ★ collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc, deleteDoc をインポート
-      import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+      import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+      // ★ collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc, deleteDoc, getDocs, writeBatch をインポート
+      import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc, deleteDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
       // Your web app's Firebase configuration
       // ★★★★★ ここをきみのFirebaseプロジェクトの情報に置き換えること！ ★★★★★
@@ -163,9 +170,6 @@
         appId: "1:1016558818075:web:d72badba8a66e46bbd79be", // きみのappIdに置き換えてね
         measurementId: "G-YTRXM9MDLM" // きみのmeasurementId (G-XXXXXX) に置き換えてね
       };
-
-      // ★追加: ホストのUIDをここに設定する (セキュリティリスクを理解の上で使用)
-      const HOST_UID = "whWJXaK4e4Uyos5tCBvOoKkKdLM2"; // <-- ★★★ここにきみ自身のUIDを正確に貼り付けてね！★★★
 
       // Initialize Firebase
       const app = initializeApp(firebaseConfig);
@@ -184,10 +188,13 @@
       const messagesDiv = document.getElementById('messages');
       const messageTextInput = document.getElementById('message-text-input');
       const sendMessageButton = document.getElementById('send-message-button');
+      const resetMessagesButton = document.getElementById('reset-messages-button'); // ★追加: 全削除ボタンの要素を取得
 
       let currentUser = null; // 現在のユーザー情報
+      let hostUid = null; // ★追加: ホストのUIDをここに保存する
+      let messageUnsubscribe = null; // メッセージリスナーを停止するための変数
 
-            // --- 認証機能 ---
+      // --- 認証機能 ---
 
       // 匿名ログイン
       signInButton.addEventListener('click', async () => {
@@ -203,19 +210,19 @@
       // ログアウト
       signOutButton.addEventListener('click', async () => {
           try {
-              await auth.signOut();
+              await signOut(auth); // auth.signOut() から signOut(auth) に変更 (推奨の書き方)
               console.log("退室しました。");
           } catch (error) {
               console.error("ログアウトエラー:", error);
           }
       });
 
-            // ログイン状態の変化を監視する
-      onAuthStateChanged(auth, (user) => {
+      // ログイン状態の変化を監視する
+      onAuthStateChanged(auth, async (user) => { // ★async を追加
           if (user) {
               // ログイン中
               currentUser = user;
-              console.log("Current User UID:", currentUser.uid); // ★ここに追加してね！
+              await setupHostUid(); // ★追加: ホストUIDの読み込み
               fetchUserName(user.uid); // Firestoreからユーザー名を取得
               signInButton.style.display = 'none';
               signOutButton.style.display = 'inline-block';
@@ -224,8 +231,15 @@
               messageTextInput.disabled = false;
               sendMessageButton.disabled = false;
 
+              // ホストの場合のみ全削除ボタンを表示 ★追加
+              if (currentUser.uid === hostUid) { // ★修正: hostUid を使用
+                  resetMessagesButton.style.display = 'inline-block';
+              } else {
+                  resetMessagesButton.style.display = 'none';
+              }
+
               // ログインしたらメッセージのリアルタイム表示を開始
-              setupMessageListener(user); // ★ ここを修正: ログイン時にリスナーを設定
+              setupMessageListener(user); 
           } else {
               // ログアウト中
               currentUser = null;
@@ -240,13 +254,13 @@
               messagesDiv.innerHTML = '<p>入室するとメッセージが見れます。</p>'; // ログアウト時はメッセージを非表示
 
               // ログアウトしたらメッセージリスナーを停止
-              if (messageUnsubscribe) { // ★ ここを修正: リスナーがアクティブなら停止
+              if (messageUnsubscribe) {
                   messageUnsubscribe();
                   messageUnsubscribe = null;
               }
+              resetMessagesButton.style.display = 'none'; // ★追加: ログアウトしたらボタンを隠す
           }
       });
-
 
       // ユーザー名を変更する
       changeNameButton.addEventListener('click', async () => {
@@ -274,7 +288,17 @@
           }
       }
 
-            let messageUnsubscribe = null; // ★追加: メッセージリスナーを停止するための変数
+      // ★追加: FirestoreからホストのUIDを読み込む関数
+      async function setupHostUid() {
+          const hostDocRef = doc(db, "settings", "host");
+          const hostDocSnap = await getDoc(hostDocRef);
+          if (hostDocSnap.exists()) {
+              hostUid = hostDocSnap.data().uid;
+              console.log("ホストUIDを読み込みました:", hostUid);
+          } else {
+              console.warn("settings/host ドキュメントが見つかりません。ホストUIDが設定されていません。");
+          }
+      }
 
       // --- メッセージ機能 ---
 
@@ -362,8 +386,32 @@
         });
       }
 
+      // ★追加: 全メッセージリセット機能
+      resetMessagesButton.addEventListener('click', async () => {
+          if (currentUser && currentUser.uid === hostUid) { // ホストユーザーのみ実行可能
+              if (confirm('本当にすべてのメッセージを削除しますか？この操作は元に戻せません！')) {
+                  try {
+                      // messagesコレクションのすべてのドキュメントを取得
+                      const messagesSnapshot = await getDocs(collection(db, "messages"));
+                      // バッチ処理で一括削除
+                      const batch = writeBatch(db);
+                      messagesSnapshot.forEach((msgDoc) => {
+                          batch.delete(msgDoc.ref);
+                      });
+                      await batch.commit();
+                      console.log("すべてのメッセージが削除されました！");
+                      alert("すべてのメッセージを削除しました。");
+                  } catch (error) {
+                      console.error("全メッセージ削除エラー:", error);
+                      alert("すべてのメッセージを削除できませんでした。");
+                  }
+              }
+          } else {
+              alert("この機能はホストユーザーのみ利用できます。");
+          }
+      });
+
       console.log("Firebaseが初期化され、掲示板スクリプトがロードされました！");
     </script>
 </body>
 </html>
-
