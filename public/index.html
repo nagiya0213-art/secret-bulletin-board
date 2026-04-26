@@ -3,50 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>女子寮談話室</title>
-    <!-- ここにCSSのリンクなどを追加するよ -->
+    <title>女子寮談話室 - ひみつの掲示板</title>
+    <!-- 簡単なスタイルを追加して掲示板っぽくするよ -->
     <style>
         body {
-            font-family: sans-serif;
-            margin: 20px;
-            background-color: #f0f0f0;
-            text-align: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* 上寄せ */
+            min-height: 100vh; /* 画面いっぱいの高さ */
         }
         #app-container {
-            background-color: white;
+            background-color: #ffffff;
             padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-width: 700px; /* 少し広めに */
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 20px; /* 上部に少し余白 */
+        }
+        h1 {
+            color: #8c002f; /* 女子寮っぽい色 */
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 2.2em;
+        }
+        hr {
+            border: none;
+            border-top: 1px dashed #ccc;
+            margin: 25px 0;
+        }
+        #auth-status, #message-input-area {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #user-name {
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"], button {
+            padding: 10px 15px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        button {
+            background-color: #8c002f;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+            border: none;
+        }
+        button:hover {
+            background-color: #a30037;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #messages {
+            max-height: 400px; /* スクロール可能にする */
+            overflow-y: auto;
+            border: 1px solid #eee;
+            padding: 15px;
+            background-color: #f9f9f9;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
-            margin: 20px auto;
+            text-align: left;
+        }
+        #messages p {
+            margin: 8px 0;
+            padding: 5px 10px;
+            background-color: #e6eefc;
+            border-left: 4px solid #8c002f;
+            border-radius: 4px;
+            word-wrap: break-word; /* 長い単語を折り返す */
+        }
+        #messages p:nth-child(even) { /* 偶数番目のメッセージの背景色を変える */
+            background-color: #f5f8ff;
         }
     </style>
 </head>
 <body>
     <div id="app-container">
         <h1>ようこそ、女子寮談話室へ！</h1>
-        <p>ここはまだ何も書かれていません。</p>
-        <p>ここにきみのウェブアプリのコンテンツ（メッセージの表示場所、入力フォーム、ログインボタンなど）が追加されていくよ！</p>
+
+        <div id="auth-status">
+            <p>現在のユーザー：<span id="user-name">名無しさん</span></p>
+            <input type="text" id="name-input" placeholder="名前を変更" />
+            <button id="change-name-button">名前を変更</button>
+            <button id="sign-in-button">入室する（匿名ログイン）</button>
+            <button id="sign-out-button" style="display:none;">退室する</button>
+        </div>
+
+        <hr>
+
+        <div id="messages">
+            <!-- ここにメッセージが表示されるよ -->
+            <p>まだメッセージはありません。</p>
+        </div>
+
+        <hr>
+
+        <div id="message-input-area">
+            <input type="text" id="message-text-input" placeholder="メッセージを入力" />
+            <button id="send-message-button">送信</button>
+        </div>
     </div>
 
     <!-- Firebase SDK のロードと初期化 -->
-    <!-- この <script> タグを<body>の閉じタグの直前、または<head>の閉じタグの直前に置くことが多いよ -->
     <script type="module">
       // Import the functions you need from the SDKs you need
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"; // 最新のバージョンに更新してね
-      import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"; // Authenticationを使うなら必要
-      import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; // Firestoreを使うなら必要
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+      import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+      import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
       // Your web app's Firebase configuration
-      // （ここはきみのFirebaseコンソールからコピーした実際の値を入れてね！）
+      // ★★★★★ ここをきみのFirebaseプロジェクトの情報に置き換えること！ ★★★★★
       const firebaseConfig = {
-        apiKey: "AIzaSyCzAdTI-YKCNx0dTxwDmrV93lO3RYzCE20",
-        authDomain: "freeboard-cdbe3.firebaseapp.com",
-        projectId: "freeboard-cdbe3",
-        storageBucket: "freeboard-cdbe3.firebasestorage.app",
-        messagingSenderId: "1016558818075",
-        appId: "1:1016558818075:web:d72badba8a66e46bbd79be",
-        measurementId: "G-YTRXM9MDLM"
+        apiKey: "AIzaSyCzAdTI-YKCNx0dTxwDmrV93lO3RYzCE20", // きみのAPIキー
+        authDomain: "freeboard-cdbe3.firebaseapp.com", // きみのauthDomain
+        projectId: "freeboard-cdbe3", // きみのprojectId
+        storageBucket: "freeboard-cdbe3.firebasestorage.app", // きみのstorageBucket
+        messagingSenderId: "1016558818075", // きみのmessagingSenderId
+        appId: "1:1016558818075:web:d72badba8a66e46bbd79be", // きみのappId
+        measurementId: "G-YTRXM9MDLM" // きみのmeasurementId (G-XXXXXX)
       };
 
       // Initialize Firebase
@@ -54,16 +140,158 @@
 
       // Firebase Authentication サービスを初期化
       const auth = getAuth(app);
-
       // Cloud Firestore サービスを初期化
       const db = getFirestore(app);
 
-      // ここからきみのウェブアプリのロジックを書き始めるよ！
-      // 例: ログイン状態のチェック、メッセージの読み書きなど
-      console.log("Firebaseが初期化されました！");
-      console.log("Authサービスが利用可能です。", auth);
-      console.log("Firestoreサービスが利用可能です。", db);
+      // --- HTML要素を取得 ---
+      const userNameSpan = document.getElementById('user-name');
+      const nameInput = document.getElementById('name-input');
+      const changeNameButton = document.getElementById('change-name-button');
+      const signInButton = document.getElementById('sign-in-button');
+      const signOutButton = document.getElementById('sign-out-button');
+      const messagesDiv = document.getElementById('messages');
+      const messageTextInput = document.getElementById('message-text-input');
+      const sendMessageButton = document.getElementById('send-message-button');
 
+      let currentUser = null; // 現在のユーザー情報
+
+      // --- 認証機能 ---
+
+      // 匿名ログイン
+      signInButton.addEventListener('click', async () => {
+          try {
+              await signInAnonymously(auth);
+              console.log("匿名ログインしました！");
+          } catch (error) {
+              console.error("匿名ログインエラー:", error);
+              alert("入室できませんでした。もう一度試してください。");
+          }
+      });
+
+      // ログアウト
+      signOutButton.addEventListener('click', async () => {
+          try {
+              await auth.signOut();
+              console.log("退室しました。");
+          } catch (error) {
+              console.error("ログアウトエラー:", error);
+          }
+      });
+
+      // ログイン状態の変化を監視する
+      onAuthStateChanged(auth, (user) => {
+          if (user) {
+              // ログイン中
+              currentUser = user;
+              fetchUserName(user.uid); // Firestoreからユーザー名を取得
+              signInButton.style.display = 'none';
+              signOutButton.style.display = 'inline-block';
+              nameInput.disabled = false;
+              changeNameButton.disabled = false;
+              messageTextInput.disabled = false;
+              sendMessageButton.disabled = false;
+          } else {
+              // ログアウト中
+              currentUser = null;
+              userNameSpan.textContent = '名無しさん';
+              nameInput.value = '';
+              signInButton.style.display = 'inline-block';
+              signOutButton.style.display = 'none';
+              nameInput.disabled = true;
+              changeNameButton.disabled = true;
+              messageTextInput.disabled = true;
+              sendMessageButton.disabled = true;
+              messagesDiv.innerHTML = '<p>入室するとメッセージが見れます。</p>'; // ログアウト時はメッセージを非表示
+          }
+      });
+
+      // ユーザー名を変更する
+      changeNameButton.addEventListener('click', async () => {
+          if (currentUser && nameInput.value.trim() !== '') {
+              const newName = nameInput.value.trim();
+              await setDoc(doc(db, "users", currentUser.uid), { displayName: newName }, { merge: true });
+              userNameSpan.textContent = newName;
+              nameInput.value = ''; // 入力欄をクリア
+              // alert("名前を変更しました！"); // アラートは頻繁だと邪魔なのでコンソールに
+              console.log("名前を変更しました:", newName);
+          } else {
+              alert("ログインしているか、新しい名前が入力されているか確認してください。");
+          }
+      });
+
+      // Firestoreからユーザー名を取得する関数
+      async function fetchUserName(uid) {
+          const userDocRef = doc(db, "users", uid);
+          const userDocSnap = await getDoc(userDocRef);
+          if (userDocSnap.exists()) {
+              userNameSpan.textContent = userDocSnap.data().displayName || '名無しさん';
+          } else {
+              // まだユーザー名が設定されていない場合、デフォルト名でFirestoreに保存しておく
+              await setDoc(doc(db, "users", uid), { displayName: '名無しさん' }, { merge: true });
+              userNameSpan.textContent = '名無しさん';
+          }
+      }
+
+      // --- メッセージ機能 ---
+
+      // メッセージ送信
+      sendMessageButton.addEventListener('click', async () => {
+          if (currentUser && messageTextInput.value.trim() !== '') {
+              const messageText = messageTextInput.value.trim();
+              const displayName = userNameSpan.textContent; // 現在の表示名を使用
+
+              try {
+                  await addDoc(collection(db, "messages"), {
+                      text: messageText,
+                      authorUid: currentUser.uid,
+                      authorName: displayName, // 送信時の名前を保存
+                      timestamp: serverTimestamp() // Firebaseのサーバー時間で記録
+                  });
+                  messageTextInput.value = ''; // 入力欄をクリア
+              } catch (error) {
+                  console.error("メッセージ送信エラー:", error);
+                  alert("メッセージを送信できませんでした。");
+              }
+          } else {
+              alert("入室しているか、メッセージが入力されているか確認してください。");
+          }
+      });
+
+      // メッセージのリアルタイム表示（ログイン中のみ）
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          // "messages"コレクションへのクエリを作成 (最新の20件を降順で)
+          const q = query(collection(db, "messages"), orderBy("timestamp", "desc"));
+
+          // リアルタイムリスナーを設定
+          onSnapshot(q, (snapshot) => {
+              messagesDiv.innerHTML = ''; // 一度既存のメッセージをクリア
+              if (snapshot.empty) {
+                  messagesDiv.innerHTML = '<p>まだメッセージはありません。</p>';
+                  return;
+              }
+              // 最新メッセージが上に来るようにするため、逆順に追加
+              const messages = [];
+              snapshot.forEach((doc) => {
+                  messages.push(doc.data());
+              });
+              // 逆順に追加すると、古いメッセージから表示されるので、新しい順に表示したい場合は、配列を逆にする
+              messages.reverse().forEach(message => {
+                  const messageElement = document.createElement('p');
+                  // タイムスタンプが存在し、toDate()メソッドがあれば整形する
+                  const time = message.timestamp && typeof message.timestamp.toDate === 'function'
+                      ? new Date(message.timestamp.toDate()).toLocaleTimeString()
+                      : '時刻不明';
+                  messageElement.textContent = `${message.authorName} (${time}): ${message.text}`;
+                  messagesDiv.appendChild(messageElement);
+              });
+              // 最新のメッセージが見えるようにスクロール
+              messagesDiv.scrollTop = messagesDiv.scrollHeight;
+          });
+        }
+      });
+
+      console.log("Firebaseが初期化され、掲示板スクリプトがロードされました！");
     </script>
 </body>
 </html>

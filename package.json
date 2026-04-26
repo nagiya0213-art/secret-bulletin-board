@@ -8,10 +8,11 @@
     "build": "echo \"No complex build process, just copy files.\" && exit 0"
   },
   "keywords": [],
-  "author": "Nagiya",
+  "author": "Your Name",
   "license": "ISC",
   "dependencies": {
     "firebase": "^12.12.1"
   }
 }
+
 
