@@ -138,7 +138,7 @@
         </div>
     </div>
 
-    <!-- Firebase SDK のロードと初期化 -->
+        <!-- Firebase SDK のロードと初期化 -->
     <script type="module">
       // Import the functions you need from the SDKs you need
       import { initializeApp } from "https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js";
@@ -149,13 +149,13 @@
       // Your web app's Firebase configuration
       // ★★★★★ ここをきみのFirebaseプロジェクトの情報に置き換えること！ ★★★★★
       const firebaseConfig = {
-        apiKey: "AIzaSyCzAdTI-YKCNx0dTxwDmrV93lO3RYzCE20", // <-- きみのAPIキーに置き換えてね
-        authDomain: "freeboard-cdbe3.firebaseapp.com", // <-- きみのauthDomainに置き換えてね (例: freeboard-cdbe3.firebaseapp.com)
-        projectId: "freeboard-cdbe3", // <-- きみのprojectIdに置き換えてね (例: freeboard-cdbe3)
-        storageBucket: "freeboard-cdbe3.firebasestorage.app", // <-- きみのstorageBucketに置き換えてね
-        messagingSenderId: "1016558818075", // <-- きみのmessagingSenderIdに置き換えてね
-        appId: "1:1016558818075:web:d72badba8a66e46bbd79be", // <-- きみのappIdに置き換えてね
-        measurementId: "G-YTRXM9MDLM" // <-- きみのmeasurementId (G-XXXXXX) に置き換えてね
+        apiKey: "AIzaSyCzAdTI-YKCNx0dTxwDmrV93lO3RYzCE20", // きみのAPIキーに置き換えてね
+        authDomain: "freeboard-cdbe3.firebaseapp.com", // きみのauthDomainに置き換えてね (例: freeboard-cdbe3.firebaseapp.com)
+        projectId: "freeboard-cdbe3", // きみのprojectIdに置き換えてね (例: freeboard-cdbe3)
+        storageBucket: "freeboard-cdbe3.firebasestorage.app", // きみのstorageBucketに置き換えてね
+        messagingSenderId: "1016558818075", // きみのmessagingSenderIdに置き換えてね
+        appId: "1:1016558818075:web:d72badba8a66e46bbd79be", // きみのappIdに置き換えてね
+        measurementId: "G-YTRXM9MDLM" // きみのmeasurementId (G-XXXXXX) に置き換えてね
       };
 
       // Initialize Firebase
@@ -178,7 +178,7 @@
 
       let currentUser = null; // 現在のユーザー情報
 
-      // --- 認証機能 ---
+            // --- 認証機能 ---
 
       // 匿名ログイン
       signInButton.addEventListener('click', async () => {
@@ -213,6 +213,9 @@
               changeNameButton.disabled = false;
               messageTextInput.disabled = false;
               sendMessageButton.disabled = false;
+
+              // ログインしたらメッセージのリアルタイム表示を開始
+              setupMessageListener(user); // ★ ここを修正: ログイン時にリスナーを設定
           } else {
               // ログアウト中
               currentUser = null;
@@ -225,6 +228,12 @@
               messageTextInput.disabled = true;
               sendMessageButton.disabled = true;
               messagesDiv.innerHTML = '<p>入室するとメッセージが見れます。</p>'; // ログアウト時はメッセージを非表示
+
+              // ログアウトしたらメッセージリスナーを停止
+              if (messageUnsubscribe) { // ★ ここを修正: リスナーがアクティブなら停止
+                  messageUnsubscribe();
+                  messageUnsubscribe = null;
+              }
           }
       });
 
@@ -254,6 +263,8 @@
           }
       }
 
+            let messageUnsubscribe = null; // ★追加: メッセージリスナーを停止するための変数
+
       // --- メッセージ機能 ---
 
       // メッセージ送信
@@ -263,5 +274,85 @@
               const displayName = userNameSpan.textContent; // 現在の表示名を使用
 
               try {
-                  await addDoc(collection(応答がありません
+                  await addDoc(collection(db, "messages"), {
+                      text: messageText,
+                      authorUid: currentUser.uid,
+                      authorName: displayName, // 送信時の名前を保存
+                      timestamp: serverTimestamp() // Firebaseのサーバー時間で記録
+                  });
+                  messageTextInput.value = ''; // 入力欄をクリア
+                  console.log("メッセージを送信しました。");
+              } catch (error) {
+                  console.error("メッセージ送信エラー:", error);
+                  alert("メッセージを送信できませんでした。");
+              }
+          } else {
+              alert("入室しているか、メッセージが入力されているか確認してください。");
+          }
+      });
+
+      // メッセージのリアルタイム表示リスナーを設定する関数
+      function setupMessageListener(user) {
+        // 既存のリスナーがあれば停止
+        if (messageUnsubscribe) {
+            messageUnsubscribe();
+        }
+
+        // "messages"コレクションへのクエリを作成 (timestampの降順で取得)
+        const q = query(collection(db, "messages"), orderBy("timestamp", "desc"));
+
+        // リアルタイムリスナーを設定
+        messageUnsubscribe = onSnapshot(q, (snapshot) => {
+            messagesDiv.innerHTML = ''; // 一度既存のメッセージをクリア
+            if (snapshot.empty) {
+                messagesDiv.innerHTML = '<p>まだメッセージはありません。</p>';
+                return;
+            }
+            const messages = [];
+            snapshot.forEach((doc) => {
+                messages.push({ id: doc.id, ...doc.data() }); // ドキュメントIDも保存
+            });
+            // 古いメッセージから表示するために逆順にする (orderBy("asc")と同じ効果)
+            messages.reverse().forEach(message => {
+                const messageContainer = document.createElement('div'); // メッセージごとのコンテナ
+                messageContainer.classList.add('message-item-container');
+
+                const messageTextSpan = document.createElement('span');
+                messageTextSpan.classList.add('message-content'); // スタイル適用のためクラスを追加
+                // タイムスタンプを日付のみで整形
+                const dateOnly = message.timestamp && typeof message.timestamp.toDate === 'function'
+                    ? new Date(message.timestamp.toDate()).toLocaleDateString('ja-JP') // 日付のみ
+                    : '日付不明';
+                messageTextSpan.textContent = `${message.authorName} (${dateOnly}): ${message.text}`;
+                messageContainer.appendChild(messageTextSpan);
+
+                // 自分の投稿なら削除ボタンを追加
+                if (user && user.uid === message.authorUid) { // ログインユーザーと投稿者が一致する場合
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = '削除';
+                    deleteButton.classList.add('delete-button'); // CSSクラスを追加
+                    deleteButton.addEventListener('click', async () => {
+                        if (confirm('本当にこのメッセージを削除しますか？')) {
+                            try {
+                                await deleteDoc(doc(db, "messages", message.id)); // message.id を使って削除
+                                console.log("メッセージを削除しました。");
+                            } catch (error) {
+                                console.error("メッセージ削除エラー:", error);
+                                alert("メッセージを削除できませんでした。");
+                            }
+                        }
+                    });
+                    messageContainer.appendChild(deleteButton);
+                }
+                messagesDiv.appendChild(messageContainer);
+            });
+            // 最新のメッセージが見えるようにスクロール
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        });
+      }
+
+      console.log("Firebaseが初期化され、掲示板スクリプトがロードされました！");
+    </script>
+</body>
+</html>
 
