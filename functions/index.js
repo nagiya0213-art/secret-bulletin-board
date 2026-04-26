@@ -30,3 +30,36 @@ setGlobalOptions({ maxInstances: 10 });
 //   logger.info("Hello logs!", {structuredData: true});
 //   response.send("Hello from Firebase!");
 // });
+
+// host権限を設定するためのCallable Function (一時的に使用)
+exports.setHostClaim = functions.https.onCall(async (data, context) => {
+  // 認証されているか確認
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'この機能は認証されたユーザーのみが利用できます。');
+  }
+
+  // 渡されたUIDが現在の認証済みユーザーのUIDと一致するか確認 (自身の権限を設定するため)
+  // もしくは、管理者だけが他人の権限を設定できるようにするなら、isHostをチェック
+  const uid = context.auth.uid; // 呼び出し元のユーザーのUID
+  const targetUid = data.uid; // 設定したいターゲットのUID (ここでは自分自身)
+
+  if (uid !== targetUid) {
+    throw new functions.https.HttpsError('permission-denied', '他のユーザーの権限を設定することはできません。');
+  }
+
+  try {
+    // カスタムクレームを設定
+    await admin.auth().setCustomUserClaims(uid, { host: true });
+    console.log(`Custom claim 'host: true' set for user: ${uid}`);
+
+    // 最新のIDトークンを強制的に再発行させる
+    // これにより、ウェブアプリ側が新しいカスタムクレームをすぐに認識できるようになる
+    await admin.auth().revokeRefreshTokens(uid); 
+
+    return { result: `Custom claim 'host: true' set for user ${uid}. Please re-login on the client side.` };
+  } catch (error) {
+    console.error('Error setting custom claim:', error);
+    throw new functions.https.HttpsError('internal', 'カスタムクレームの設定中にエラーが発生しました。', error.message);
+  }
+});
+

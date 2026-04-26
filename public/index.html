@@ -136,6 +136,12 @@
             <input type="text" id="message-text-input" placeholder="メッセージを入力" />
             <button id="send-message-button">送信</button>
         </div>
+
+        <!-- ★ここから追加: ホスト用の全メッセージ削除ボタン -->
+        <div style="text-align: center; margin-top: 20px;">
+            <button id="reset-messages-button" style="display:none;">全メッセージをリセット</button>
+        </div>
+        <!-- ★ここまで追加 -->
     </div>
 
         <!-- Firebase SDK のロードと初期化 -->
@@ -157,6 +163,9 @@
         appId: "1:1016558818075:web:d72badba8a66e46bbd79be", // きみのappIdに置き換えてね
         measurementId: "G-YTRXM9MDLM" // きみのmeasurementId (G-XXXXXX) に置き換えてね
       };
+
+      // ★追加: ホストのUIDをここに設定する (セキュリティリスクを理解の上で使用)
+      const HOST_UID = "znbXK8TCDgPB9AfUU7woK4ja8rR2"; // <-- ★★★ここにきみ自身のUIDを正確に貼り付けてね！★★★
 
       // Initialize Firebase
       const app = initializeApp(firebaseConfig);
