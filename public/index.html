@@ -116,6 +116,31 @@
         #reset-messages-button:hover {
             background-color: #fb8c00;
         }
+	        /* 既存のinput[type="text"], button のスタイルの下に追記 */
+        textarea {
+            width: calc(100% - 130px); /* ボタンの幅を考慮して調整 */
+            max-width: calc(100% - 130px); /* これも追加 */
+            padding: 10px 15px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            vertical-align: top; /* ボタンとの位置を合わせる */
+            min-height: 80px; /* 最小の高さ */
+            resize: vertical; /* 縦方向のみリサイズ可能にする */
+        }
+        /* メッセージ入力欄と送信ボタンが並ぶように調整 */
+        #message-input-area {
+            display: flex; /* Flexboxを有効に */
+            align-items: flex-end; /* ボタンが入力欄の下部に揃うように */
+            justify-content: center;
+        }
+        #message-input-area button {
+            flex-shrink: 0; /* ボタンの幅が縮まないように */
+            height: fit-content; /* ボタンの高さをコンテンツに合わせる */
+            align-self: flex-end; /* ボタンを一番下に揃える */
+        }
+
     </style>
 </head>
 <body>
@@ -146,12 +171,14 @@
             <p>入室するとメッセージが見れます。</p>
         </div>
 
-        <hr>
+                <hr>
 
         <div id="message-input-area">
-            <input type="text" id="message-text-input" placeholder="メッセージを入力" />
+            <!-- ★ここを修正！ inputをtextareaに変更するよ -->
+            <textarea id="message-text-input" placeholder="メッセージを入力" rows="4"></textarea> <!-- rows="4"で初期の高さを設定 -->
             <button id="send-message-button">送信</button>
         </div>
+
 
         <!-- ホスト用の全メッセージ削除ボタン -->
         <div style="text-align: center; margin-top: 20px;">
