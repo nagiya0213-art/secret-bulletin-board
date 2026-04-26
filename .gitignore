@@ -67,3 +67,6 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# Firebase CLIの認証情報が含まれるフォルダをGit管理から外す
+.config/
