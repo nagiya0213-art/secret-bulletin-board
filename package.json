@@ -1,16 +1,17 @@
 {
-  "name": "your-secret-bulletin-board", // プロジェクトの名前を分かりやすいものに変えてもいいよ
+  "name": "your-secret-bulletin-board",
   "version": "1.0.0",
-  "description": "A secret bulletin board application using Firebase.", // プロジェクトの説明
-  "main": "index.js", // メインとなるJavaScriptファイルの名前
+  "description": "A secret bulletin board application using Firebase.",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "echo \"No complex build process, just copy files.\" && exit 0" // ここを追加！
+    "build": "echo \"No complex build process, just copy files.\" && exit 0"
   },
   "keywords": [],
-  "author": "Nagiya", // きみの名前に変えてもいいよ
+  "author": "Nagiya",
   "license": "ISC",
   "dependencies": {
     "firebase": "^12.12.1"
   }
 }
+
