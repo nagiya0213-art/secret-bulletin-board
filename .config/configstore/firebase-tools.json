@@ -1,0 +1,43 @@
+{
+	"motd": {
+		"cloudBuildErrorAfter": 1594252800000,
+		"cloudBuildWarnAfter": 1590019200000,
+		"defaultNode10After": 1594252800000,
+		"minVersion": "3.0.5",
+		"node8DeploysDisabledAfter": 1613390400000,
+		"node8RuntimeDisabledAfter": 1615809600000,
+		"node8WarnAfter": 1600128000000,
+		"fetched": 1777111083496
+	},
+	"gemini": true,
+	"usage": true,
+	"analytics-uuid": "be4dca87-08cf-4bac-96e7-2808c6582c20",
+	"user": {
+		"iss": "accounts.google.com",
+		"azp": "563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com",
+		"aud": "563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com",
+		"sub": "115681337194396607139",
+		"email": "nagiya0213@gmail.com",
+		"email_verified": true,
+		"at_hash": "4ggU-UyDJRxqx9hj3v-Sdg",
+		"iat": 1777111101,
+		"exp": 1777114701
+	},
+	"tokens": {
+		"expires_at": 1777114700416,
+		"access_token": "ya29.a0Aa7MYipBwp6WsxutTyLHl8blATjWKLU032TSf5P1byQ4Uk-aZ422uwt1MaG4D7sEAdDKIbmZ9txoSfSSrjEy7nW4AQ446JKHv8Eu4-yKRBxLhrnbHjGvoNy1MhICHc9AO0Sub1CfNN-700HY4V_Um5-abHq4EppbnoDvGNVNR8gksFHq3iUzRY4LYvNnfEBt1eXU_e9ZrX-uaCgYKAX8SARQSFQHGX2Mi9qADeOScHchbLpmOIwPq7A0211",
+		"expires_in": 3599,
+		"refresh_token": "1//0ebHsTSZqtrGzCgYIARAAGA4SNwF-L9IrbRmE1yccQyU2yA9Vl7zC826o0B6EDi3D8tuKzY1cxzQMSIoDc1-CZmPmiGNpz12rNvo",
+		"scope": "https://www.googleapis.com/auth/firebase https://www.googleapis.com/auth/userinfo.email openid https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/cloudplatformprojects.readonly",
+		"token_type": "Bearer",
+		"id_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjY0NzAxNGY5YTRhNGNiYmI2ZTlhYTFmOWUzMGVlNmNjNzBkYTc0MmEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJhY2NvdW50cy5nb29nbGUuY29tIiwiYXpwIjoiNTYzNTg0MzM1ODY5LWZncmhnbWQ0N2JxbmVraWo1aThiNXByMDNobzg0OWU2LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwiYXVkIjoiNTYzNTg0MzM1ODY5LWZncmhnbWQ0N2JxbmVraWo1aThiNXByMDNobzg0OWU2LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29tIiwic3ViIjoiMTE1NjgxMzM3MTk0Mzk2NjA3MTM5IiwiZW1haWwiOiJuYWdpeWEwMjEzQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJhdF9oYXNoIjoiNGdnVS1VeURKUnhxeDloajN2LVNkZyIsImlhdCI6MTc3NzExMTEwMSwiZXhwIjoxNzc3MTE0NzAxfQ.sKAU8fZNZCUOJ9nI-idOPdLw-unuGmzW9GY8az6v4d0S2a0lAAigKgNvRZop-py0VnxanxIV0wJDJ4FfIInhgDQNipEQSy96s0M26jpZ5SIwlIpeuMCpq--WqWk7lEu3pA9p9pUdYj3GjZNHWKXmpypvCWWKZQ7_VYynRTun1KHYUKPUWNQ0d1nI6MnjQZ__J27B8p1mJzDdiZLvctnSyj4TbX1pOKcBRtjzLB2mD3aZKm31eesybSkzOOwCXr1HcyoRup9K1Ulo6fovjhg-DM5c7sRGnZ0XYKa2K_St3OIbAZ02TaHBIi7HxD6XiZv9aA3C246PrV0whoUL2yD5sg"
+	},
+	"activeProjects": {
+		"C:\\Users\\nagiy": "freeboard-cdbe3"
+	},
+	"apiEnablementCache": {
+		"freeboard-cdbe3": {
+			"firestore.googleapis.com": true
+		}
+	}
+}
