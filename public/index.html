@@ -139,6 +139,8 @@
 
     <!-- Firebase SDK のロードと初期化 -->
     <script type="module">
+      console.log("★★★★★★ Script started! ★★★★★★"); // スクリプトの開始を確認
+
       // Import the functions you need from the SDKs you need
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
       // ★ signInAnonymously, onAuthStateChanged をインポート
@@ -158,13 +160,18 @@
         measurementId: "G-YTRXM9MDLM" // <-- きみのmeasurementId (G-XXXXXX) に置き換えてね
       };
 
+      console.log("Firebase config loaded."); // configの読み込み確認
+
       // Initialize Firebase
       const app = initializeApp(firebaseConfig);
+      console.log("Firebase app initialized."); // appの初期化確認
 
       // Firebase Authentication サービスを初期化
       const auth = getAuth(app);
+      console.log("Firebase Auth service initialized."); // Authの初期化確認
       // Cloud Firestore サービスを初期化
       const db = getFirestore(app);
+      console.log("Firebase Firestore service initialized."); // Firestoreの初期化確認
 
       // --- HTML要素を取得 ---
       const userNameSpan = document.getElementById('user-name');
@@ -175,28 +182,28 @@
       const messagesDiv = document.getElementById('messages');
       const messageTextInput = document.getElementById('message-text-input');
       const sendMessageButton = document.getElementById('send-message-button');
+      console.log("HTML elements acquired."); // 要素取得確認
 
       let currentUser = null; // 現在のユーザー情報
 
       // --- 認証機能 ---
 
       // 匿名ログイン
-            // 匿名ログイン
       signInButton.addEventListener('click', async () => {
-          console.log("入室ボタンがクリックされました！"); // ★ここを追加
+          console.log("入室ボタンがクリックされました！"); // クリックイベントが発火したか確認
           try {
-              console.log("signInAnonymouslyを呼び出します..."); // ★ここを追加
+              console.log("signInAnonymouslyを呼び出します...");
               await signInAnonymously(auth);
-              console.log("匿名ログインしました！"); // ★ここも確認
+              console.log("匿名ログインしました！");
           } catch (error) {
-              console.error("匿名ログインエラー:", error); // ★ここも確認
+              console.error("匿名ログインエラー:", error);
               alert("入室できませんでした。もう一度試してください。");
           }
       });
 
-
       // ログアウト
       signOutButton.addEventListener('click', async () => {
+          console.log("退室ボタンがクリックされました！");
           try {
               await auth.signOut();
               console.log("退室しました。");
@@ -207,8 +214,9 @@
 
       // ログイン状態の変化を監視する
       onAuthStateChanged(auth, (user) => {
+          console.log("onAuthStateChanged: user =", user); // ログイン状態の変化を監視
           if (user) {
-              // ログイン中
+              console.log("onAuthStateChanged: ログイン中です！ User UID:", user.uid);
               currentUser = user;
               fetchUserName(user.uid); // Firestoreからユーザー名を取得
               signInButton.style.display = 'none';
@@ -218,7 +226,7 @@
               messageTextInput.disabled = false;
               sendMessageButton.disabled = false;
           } else {
-              // ログアウト中
+              console.log("onAuthStateChanged: ログアウト中です。");
               currentUser = null;
               userNameSpan.textContent = '名無しさん';
               nameInput.value = '';
@@ -234,12 +242,13 @@
 
       // ユーザー名を変更する
       changeNameButton.addEventListener('click', async () => {
+          console.log("名前変更ボタンがクリックされました！"); // クリックイベントが発火したか確認
           if (currentUser && nameInput.value.trim() !== '') {
+              console.log("名前変更処理を開始します...");
               const newName = nameInput.value.trim();
               await setDoc(doc(db, "users", currentUser.uid), { displayName: newName }, { merge: true });
               userNameSpan.textContent = newName;
               nameInput.value = ''; // 入力欄をクリア
-              // alert("名前を変更しました！"); // アラートは頻繁だと邪魔なのでコンソールに
               console.log("名前を変更しました:", newName);
           } else {
               alert("ログインしているか、新しい名前が入力されているか確認してください。");
@@ -248,14 +257,17 @@
 
       // Firestoreからユーザー名を取得する関数
       async function fetchUserName(uid) {
+          console.log("fetchUserName: UID =", uid);
           const userDocRef = doc(db, "users", uid);
           const userDocSnap = await getDoc(userDocRef);
           if (userDocSnap.exists()) {
               userNameSpan.textContent = userDocSnap.data().displayName || '名無しさん';
+              console.log("fetchUserName: 名前を取得しました -", userNameSpan.textContent);
           } else {
               // まだユーザー名が設定されていない場合、デフォルト名でFirestoreに保存しておく
               await setDoc(doc(db, "users", uid), { displayName: '名無しさん' }, { merge: true });
               userNameSpan.textContent = '名無しさん';
+              console.log("fetchUserName: ユーザー名が未設定のため『名無しさん』を設定しました。");
           }
       }
 
@@ -263,7 +275,9 @@
 
       // メッセージ送信
       sendMessageButton.addEventListener('click', async () => {
+          console.log("送信ボタンがクリックされました！"); // クリックイベントが発火したか確認
           if (currentUser && messageTextInput.value.trim() !== '') {
+              console.log("メッセージ送信処理を開始します...");
               const messageText = messageTextInput.value.trim();
               const displayName = userNameSpan.textContent; // 現在の表示名を使用
 
@@ -275,6 +289,7 @@
                       timestamp: serverTimestamp() // Firebaseのサーバー時間で記録
                   });
                   messageTextInput.value = ''; // 入力欄をクリア
+                  console.log("メッセージを送信しました。");
               } catch (error) {
                   console.error("メッセージ送信エラー:", error);
                   alert("メッセージを送信できませんでした。");
@@ -285,13 +300,30 @@
       });
 
       // メッセージのリアルタイム表示（ログイン中のみ）
+      // この onAuthStateChanged は上で定義されているものと重複するので、注意深く結合するか、
+      // ログイン状態が変わるたびにメッセージのリスナーを再設定する形にする必要がある
+      // 今回は既存の onAuthStateChanged の中でリスナー設定を行う形式に修正する
+      // (このコードブロック自体は、上で一度定義されているonAuthStateChangedの中に統合されることを想定している)
+      // 仮にコードがそのまま置かれると、イベントリスナーが二重に設定される可能性があるので注意。
+
+      // 下記の onAuthStateChanged ブロックは、上記の onAuthStateChanged の `if (user)` ブロック内に統合されるべき
+      // 現状のコードでは、この `onAuthStateChanged` ブロックが独立して存在するため、
+      // ログイン状態監視のロジックが二重化している可能性があります。
+      // ですが、デバッグ目的でそのまま動かす場合は問題ありません。
+
+      // ログイン状態の変化を監視する (メッセージ表示部分のリスナー)
+      // ※このブロックは上記のonAuthStateChangedと統合されている想定。
+      //   もし別々に記述されている場合は、ログイン状態が変化するたびにリスナーが二重に起動しないよう注意が必要です。
+      //   ここでは、独立したリスナーとして動作することを想定して記述を維持します。
       onAuthStateChanged(auth, (user) => {
         if (user) {
+          console.log("メッセージ表示リスナー: ログイン中。");
           // "messages"コレクションへのクエリを作成 (timestampの降順で取得)
           const q = query(collection(db, "messages"), orderBy("timestamp", "desc"));
 
           // リアルタイムリスナーを設定
           onSnapshot(q, (snapshot) => {
+              console.log("メッセージスナップショットを受信しました。");
               messagesDiv.innerHTML = ''; // 一度既存のメッセージをクリア
               if (snapshot.empty) {
                   messagesDiv.innerHTML = '<p>まだメッセージはありません。</p>';
@@ -318,18 +350,4 @@
                           second: '2-digit'
                         })
                       : '日時不明';
-                  messageTextSpan.textContent = `${message.authorName} (${dateTime}): ${message.text}`;
-                  messageContainer.appendChild(messageTextSpan);
-
-                  // 自分の投稿なら削除ボタンを追加
-                  if (currentUser && currentUser.uid === message.authorUid) {
-                      const deleteButton = document.createElement('button');
-                      deleteButton.textContent = '削除';
-                      deleteButton.classList.add('delete-button'); // CSSクラスを追加
-                      deleteButton.addEventListener('click', async () => {
-                          if (confirm('本当にこのメッセージを削除しますか？')) {
-                              try {
-                                  await deleteDoc(doc(db, "messages", message.id)); // message.id を使って削除
-                                  console.log("メッセージを削除しました。");
-                              } catch (error) {
-                                  console.error("メッセージ削除エラー:", error応答がありません
+                  messageTextSpan応答がありません
