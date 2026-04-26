@@ -76,16 +76,37 @@
             border-radius: 8px;
             text-align: left;
         }
-        #messages p {
+        /* メッセージごとのコンテナスタイル */
+        .message-item-container {
+            display: flex; /* Flexboxを使って要素を横に並べる */
+            align-items: center; /* 縦方向中央揃え */
+            justify-content: space-between; /* 要素を両端に寄せる */
             margin: 8px 0;
             padding: 5px 10px;
             background-color: #e6eefc;
             border-left: 4px solid #8c002f;
             border-radius: 4px;
-            word-wrap: break-word; /* 長い単語を折り返す */
+            word-wrap: break-word;
         }
-        #messages p:nth-child(even) { /* 偶数番目のメッセージの背景色を変える */
+        .message-item-container:nth-child(even) {
             background-color: #f5f8ff;
+        }
+        .message-item-container span {
+            flex-grow: 1; /* メッセージ本文が広がるように */
+            margin-right: 10px; /* ボタンとの間にスペース */
+        }
+        .delete-button {
+            background-color: #f44336; /* 赤色のボタン */
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+        .delete-button:hover {
+            background-color: #d32f2f;
         }
     </style>
 </head>
@@ -105,7 +126,7 @@
 
         <div id="messages">
             <!-- ここにメッセージが表示されるよ -->
-            <p>まだメッセージはありません。</p>
+            <p>入室するとメッセージが見れます。</p>
         </div>
 
         <hr>
@@ -120,19 +141,21 @@
     <script type="module">
       // Import the functions you need from the SDKs you need
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+      // ★ signInAnonymously, onAuthStateChanged をインポート
       import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-      import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+      // ★ collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc, deleteDoc をインポート
+      import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
       // Your web app's Firebase configuration
       // ★★★★★ ここをきみのFirebaseプロジェクトの情報に置き換えること！ ★★★★★
       const firebaseConfig = {
-        apiKey: "AIzaSyCzAdTI-YKCNx0dTxwDmrV93lO3RYzCE20", // きみのAPIキー
-        authDomain: "freeboard-cdbe3.firebaseapp.com", // きみのauthDomain
-        projectId: "freeboard-cdbe3", // きみのprojectId
-        storageBucket: "freeboard-cdbe3.firebasestorage.app", // きみのstorageBucket
-        messagingSenderId: "1016558818075", // きみのmessagingSenderId
-        appId: "1:1016558818075:web:d72badba8a66e46bbd79be", // きみのappId
-        measurementId: "G-YTRXM9MDLM" // きみのmeasurementId (G-XXXXXX)
+        apiKey: "AIzaSyCzAdTI-YKCNx0dTxwDmrV93lO3RYzCE20", // <-- きみのAPIキーに置き換えてね
+        authDomain: "freeboard-cdbe3.firebaseapp.com", // <-- きみのauthDomainに置き換えてね (例: freeboard-cdbe3.firebaseapp.com)
+        projectId: "freeboard-cdbe3", // <-- きみのprojectIdに置き換えてね (例: freeboard-cdbe3)
+        storageBucket: "freeboard-cdbe3.firebasestorage.app", // <-- きみのstorageBucketに置き換えてね
+        messagingSenderId: "1016558818075", // <-- きみのmessagingSenderIdに置き換えてね
+        appId: "1:1016558818075:web:d72badba8a66e46bbd79be", // <-- きみのappIdに置き換えてね
+        measurementId: "G-YTRXM9MDLM" // <-- きみのmeasurementId (G-XXXXXX) に置き換えてね
       };
 
       // Initialize Firebase
@@ -260,7 +283,7 @@
       // メッセージのリアルタイム表示（ログイン中のみ）
       onAuthStateChanged(auth, (user) => {
         if (user) {
-          // "messages"コレクションへのクエリを作成 (最新の20件を降順で)
+          // "messages"コレクションへのクエリを作成 (timestampの降順で取得)
           const q = query(collection(db, "messages"), orderBy("timestamp", "desc"));
 
           // リアルタイムリスナーを設定
@@ -270,28 +293,39 @@
                   messagesDiv.innerHTML = '<p>まだメッセージはありません。</p>';
                   return;
               }
-              // 最新メッセージが上に来るようにするため、逆順に追加
               const messages = [];
               snapshot.forEach((doc) => {
-                  messages.push(doc.data());
+                  messages.push({ id: doc.id, ...doc.data() }); // ドキュメントIDも保存
               });
-              // 逆順に追加すると、古いメッセージから表示されるので、新しい順に表示したい場合は、配列を逆にする
+              // 古いメッセージから表示するために逆順にする (orderBy("asc")と同じ効果)
               messages.reverse().forEach(message => {
-                  const messageElement = document.createElement('p');
-                  // タイムスタンプが存在し、toDate()メソッドがあれば整形する
-                  const time = message.timestamp && typeof message.timestamp.toDate === 'function'
-                      ? new Date(message.timestamp.toDate()).toLocaleTimeString()
-                      : '時刻不明';
-                  messageElement.textContent = `${message.authorName} (${time}): ${message.text}`;
-                  messagesDiv.appendChild(messageElement);
-              });
-              // 最新のメッセージが見えるようにスクロール
-              messagesDiv.scrollTop = messagesDiv.scrollHeight;
-          });
-        }
-      });
+                  const messageContainer = document.createElement('div'); // メッセージごとのコンテナ
+                  messageContainer.classList.add('message-item-container');
 
-      console.log("Firebaseが初期化され、掲示板スクリプトがロードされました！");
-    </script>
-</body>
-</html>
+                  const messageTextSpan = document.createElement('span');
+                  // タイムスタンプを日付と時刻両方で整形
+                  const dateTime = message.timestamp && typeof message.timestamp.toDate === 'function'
+                      ? new Date(message.timestamp.toDate()).toLocaleString('ja-JP', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          second: '2-digit'
+                        })
+                      : '日時不明';
+                  messageTextSpan.textContent = `${message.authorName} (${dateTime}): ${message.text}`;
+                  messageContainer.appendChild(messageTextSpan);
+
+                  // 自分の投稿なら削除ボタンを追加
+                  if (currentUser && currentUser.uid === message.authorUid) {
+                      const deleteButton = document.createElement('button');
+                      deleteButton.textContent = '削除';
+                      deleteButton.classList.add('delete-button'); // CSSクラスを追加
+                      deleteButton.addEventListener('click', async () => {
+                          if (confirm('本当にこのメッセージを削除しますか？')) {
+                              try {
+                                  await deleteDoc(doc(db, "messages", message.id)); // message.id を使って削除
+                                  console.log("メッセージを削除しました。");
+                              } catch (error) {
+                                  console.error("メッセージ削除エラー:", error応答がありません
